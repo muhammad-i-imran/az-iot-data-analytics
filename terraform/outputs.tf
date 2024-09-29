@@ -34,12 +34,6 @@ output "iot_hub_dps_name" {
   value       = azurerm_iothub_dps.iot_dps.name
 }
 
-output "iot_hub_dps_connection_string" {
-  description = "The connection string for the IoT Hub Device Provisioning Service."
-  value       = azurerm_iothub_dps.iot_dps.connection
-  sensitive   = true
-}
-
 output "iot_hub_shared_access_policy_primary_key" {
   description = "The primary key for the IoT Hub shared access policy."
   value       = azurerm_iothub_shared_access_policy.iothub_shared_access_policy.primary_key
@@ -64,6 +58,7 @@ output "telemetry_storage_container_processed_name" {
 output "application_insights_instrumentation_key" {
   description = "The instrumentation key for Application Insights."
   value       = azurerm_application_insights.application_insights.instrumentation_key
+  sensitive = true
 }
 
 output "key_vault_uri" {
@@ -89,4 +84,15 @@ output "stream_analytics_output_storage_name" {
 output "ml_workspace_name" {
   description = "The name of the Azure ML Workspace."
   value       = azurerm_machine_learning_workspace.ml_workspace.name
+}
+
+output "sql_admin_username" {
+  description = "The admin username of the SQL database."
+  value = random_string.sql_admin_username.result
+}
+
+output "sql_admin_password" {
+  description = "The password of the admin user in SQL database."
+  value = random_password.sql_admin_password.result
+  sensitive = true
 }

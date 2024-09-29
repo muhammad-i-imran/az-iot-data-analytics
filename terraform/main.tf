@@ -534,3 +534,60 @@ resource "azurerm_data_factory_linked_service_azure_blob_storage" "IoTStorageAcc
     azurerm_storage_account.iot_storage_account.primary_access_key
   )
  }
+
+# Generate a random username
+resource "random_string" "sql_admin_username" {
+  length  = 10
+  special = false
+  upper   = false
+}
+
+# Generate a random password
+resource "random_password" "sql_admin_password" {
+  length           = 16
+  special          = true
+  override_special = "!@#$%^&*()_+-="
+}
+
+resource "azurerm_mssql_server" "iot_hist_sql_server" {
+  name                         = "iot-sql-server-${random_string.sql_admin_username.result}"
+  resource_group_name          = azurerm_resource_group.iot_resource_group.name
+  location                     = azurerm_resource_group.iot_resource_group.location
+  version                      = "12.0"
+  minimum_tls_version          = "1.2"
+  administrator_login          = random_string.sql_admin_username.result
+  administrator_login_password = random_password.sql_admin_password.result
+}
+resource "azurerm_mssql_database" "iot_hist_sql_database" {
+  name         = "iot-db"
+  server_id    = azurerm_mssql_server.iot_hist_sql_server.id
+  collation    = "SQL_Latin1_General_CP1_CI_AS"
+  license_type = "LicenseIncluded"
+  max_size_gb  = 2
+  sku_name     = "S0"
+  enclave_type = "VBS"
+
+  tags = {
+    foo = "bar"
+  }
+
+  # prevent the possibility of accidental data loss
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+
+
+resource "azurerm_data_factory_linked_service_sql_server" "iot_sqldb_linked_service" {
+  name                 = "iot-sqldb-linked-service"
+  data_factory_id      = azurerm_data_factory.iot-etl-adf.id
+  connection_string    = <<-EOF
+    Server=tcp:${azurerm_mssql_server.iot_hist_sql_server.fully_qualified_domain_name},1433;
+    Initial Catalog=${azurerm_mssql_database.iot_hist_sql_database.name};
+    User ID=${random_string.sql_admin_username.result};
+    Password=${random_password.sql_admin_password.result};
+    Encrypt=true;
+    Connection Timeout=30;
+  EOF
+}
