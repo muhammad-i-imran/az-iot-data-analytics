@@ -498,7 +498,6 @@ resource "azurerm_machine_learning_compute_instance" "ml_compute_instance" {
   }
 }
 
-
 resource "azurerm_machine_learning_compute_cluster" "ml_compute_cluster" {
   name                = "ml-compute-cluster"
   location            = azurerm_machine_learning_workspace.ml_workspace.location
